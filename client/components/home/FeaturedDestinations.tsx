@@ -19,7 +19,7 @@ export default function FeaturedDestinations() {
             Explore the places travelers love the most this season.
           </p>
         </div>
-        <Button variant="outline" className="w-fit rounded-full" asChild>
+        <Button variant="outline" className="w-fit rounded-full">
           <Link href="/destinations">
             View all <ArrowRight className="size-4" />
           </Link>

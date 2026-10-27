@@ -47,7 +47,7 @@ export default function DestinationCard({
           From{" "}
           <span className="text-xl font-bold text-foreground">${price}</span>
         </p>
-        <Button size="sm" variant="outline" className="rounded-full" asChild>
+        <Button size="sm" variant="outline" className="rounded-full">
           <Link href={`/destinations/${id}`}>View details</Link>
         </Button>
       </CardFooter>

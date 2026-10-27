@@ -22,14 +22,13 @@ export default function CTA() {
             Join thousands of travelers and plan your dream trip in minutes.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Button size="lg" className="rounded-full px-8" asChild>
+            <Button size="lg" className="rounded-full px-8">
               <Link href="/destinations">Explore Destinations</Link>
             </Button>
             <Button
               size="lg"
               variant="outline"
               className="rounded-full border-white/40 bg-transparent px-8 text-white hover:bg-white/10 hover:text-white"
-              asChild
             >
               <Link href="/register">Create Account</Link>
             </Button>
