@@ -1,4 +1,4 @@
-import DestinationDetails from "@/components/destinationDetails";
+import DestinationDetails from "@/components/Destination/destinationDetails";
 import { notFound } from "next/navigation";
 
 interface Destination {
