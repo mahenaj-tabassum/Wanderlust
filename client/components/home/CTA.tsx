@@ -30,7 +30,7 @@ export default function CTA() {
               variant="outline"
               className="rounded-full border-white/40 bg-transparent px-8 text-white hover:bg-white/10 hover:text-white"
             >
-              <Link href="/register">Create Account</Link>
+              <Link href="/sign-up">Create Account</Link>
             </Button>
           </div>
         </div>

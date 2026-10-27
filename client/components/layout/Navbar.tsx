@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { Compass } from "lucide-react";
 
@@ -17,7 +16,6 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-
         {/* Left: Logo */}
         <Link
           href="/"
@@ -53,13 +51,11 @@ export default function Navbar() {
               variant="ghost"
               className="text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
             >
-              <Link href="/login">Log in</Link>
+              <Link href="/sign-in">Log in</Link>
             </Button>
 
-            <Button
-              className="rounded-full bg-emerald-600 px-5 text-white hover:bg-emerald-700"
-            >
-              <Link href="/register">Sign up</Link>
+            <Button className="rounded-full bg-emerald-600 px-5 text-white hover:bg-emerald-700">
+              <Link href="/sign-up">Sign up</Link>
             </Button>
           </div>
 

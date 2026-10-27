@@ -69,13 +69,13 @@ export default function MobileNav() {
             variant="outline"
             className="w-full border-slate-200 bg-white text-slate-900 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700"
           >
-            <Link href="/login" onClick={() => setOpen(false)}>
+            <Link href="/sign-in" onClick={() => setOpen(false)}>
               Log in
             </Link>
           </Button>
 
           <Button className="w-full bg-emerald-600 text-white hover:bg-emerald-700">
-            <Link href="/register" onClick={() => setOpen(false)}>
+            <Link href="/sign-up" onClick={() => setOpen(false)}>
               Sign up
             </Link>
           </Button>
