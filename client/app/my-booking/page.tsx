@@ -1,8 +1,7 @@
+import MyBookingComponent from "@/components/Booking-Destinations/myBooking";
 
 const MyBooking = () => {
-  return (
-	<div>MyBooking</div>
-  )
-}
+  return <MyBookingComponent />;
+};
 
-export default MyBooking
+export default MyBooking;

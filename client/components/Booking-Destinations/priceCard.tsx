@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 
@@ -24,12 +24,12 @@ interface DestinationDetailsProps {
 }
 
 const PriceCard = ({ data }: DestinationDetailsProps) => {
+  const bookingInProgress = useRef(false);
+  const [loading, setLoading] = useState(false);
   const destination = data.data;
 
   const { data: session } = authClient.useSession();
   const user = session?.user;
-
-  const [loading, setLoading] = useState(false);
 
   const departureDate = new Date(
     `${destination.departureDate}T00:00:00`,
@@ -45,12 +45,17 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
       return;
     }
 
+    // Prevent rapid repeated clicks before React re-renders
+    if (bookingInProgress.current) return;
+    setLoading(true);
+
     const bookingData = {
       userId: user.id,
       userName: user.name,
       email: user.email,
       destinationId: destination._id, // _id নয়, destinationId
       destinationName: destination.name,
+      destinationImage: destination.imageUrl,
       country: destination.country,
       price: destination.price,
       duration: destination.duration,
@@ -59,8 +64,6 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
     };
 
     try {
-      setLoading(true);
-
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/booking`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,6 +71,17 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
       });
 
       if (!res.ok) throw new Error("Booking failed");
+
+      const result = await res.json();
+
+      if (res.status === 409) {
+        toast.error("You have already booked this trip.");
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(result.message || "Booking failed");
+      }
 
       toast.success("Trip booked successfully!");
     } catch (error) {

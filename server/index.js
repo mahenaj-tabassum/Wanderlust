@@ -176,18 +176,103 @@ app.delete("/all-destinations/:id", async (req, res) => {
 
 // Post the booking data to the Booking Collection
 app.post("/booking", async (req, res) => {
-  const data = req.body;
-  const result = await bookingCollection.insertOne(data);
-  res.send({ message: "success", data: result });
+  try {
+    const bookingData = await req.body;
+
+    const { userId, destinationId } = bookingData;
+    if (!userId || !destinationId) {
+      return res.status(400).json({
+        message: "Missing required booking information",
+      });
+    }
+
+    // Check whether this booking already exists
+    const existingBooking = await bookingCollection.findOne({
+      userId,
+      destinationId,
+    });
+    if (existingBooking) {
+      return res.status(409).json({
+        message: "You have already booked this trip",
+      });
+    }
+    // No duplicate found, so create the booking.
+    const result = await bookingCollection.insertOne(bookingData);
+
+    return res.status(201).json({
+      message: "Booking created successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Booking error:", error);
+
+    return res.status(500).json({
+      message: "Failed to create booking",
+    });
+  }
 });
 
 // Get Booking Data
-app.get("/booking", async (req, res) => {
-  const booking = await bookingCollection.find().toArray();
-  res.status(200).json({
-    message: "success",
-    data: booking,
-  });
+// GET http://localhost:5000/bookings?userId=123
+app.get("/bookings", async (req, res) => {
+  try {
+    const userId = req.query.userId;
+    if (!userId) {
+      return res.status(400).json({
+        message: "User ID is required",
+      });
+    }
+    const bookings = await bookingCollection.find({ userId: userId }).toArray();
+    res.status(200).json({
+      message: "success",
+      data: bookings,
+    });
+  } catch (error) {
+    console.error("Error fetching bookings:", error);
+
+    res.status(500).json({
+      message: "Failed to load bookings",
+    });
+  }
+});
+
+// Cancel a booking
+app.delete("/booking/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.query.userId;
+
+    // Validate booking ID
+    if (!ObjectId.isValid(id)) {
+      return res.status(400).json({
+        message: "Invalid booking ID",
+      });
+    }
+    if (!userId) {
+      return res.status(400).json({
+        message: "User ID is required",
+      });
+    }
+    // Delete the booking belonging to this user
+    const result = await bookingCollection.deleteOne({
+      _id: new ObjectId(id),
+      userId: userId,
+    });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({
+        message: "Booking not found",
+      });
+    }
+     return res.status(200).json({
+      message: "Booking cancelled successfully",
+    });
+  } catch (error) {
+    console.error("Error cancelling booking:", error);
+
+    return res.status(500).json({
+      message: "Failed to cancel booking",
+    });
+  }
 });
 
 // Start server

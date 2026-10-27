@@ -23,7 +23,7 @@ const links = [
   { label: "Home", href: "/" },
   { label: "Destinations", href: "/destinations" },
   { label: "Add Destinations", href: "/addPackage" },
-  { label: "About", href: "/about" },
+  { label: "My Booking", href: "/my-booking" },
   { label: "Contact", href: "/contact" },
 ];
 

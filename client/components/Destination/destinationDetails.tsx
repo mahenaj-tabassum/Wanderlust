@@ -29,7 +29,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label"; // npx shadcn@latest add label
-import PriceCard from "../Destination-Booking/priceCard";
+import PriceCard from "../Booking-Destinations/priceCard";
 
 interface Destination {
   _id: string;
