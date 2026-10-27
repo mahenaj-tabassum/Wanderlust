@@ -1,4 +1,8 @@
-import React from "react";
+"use client";
+
+import { useState } from "react";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 interface Destination {
   _id: string;
@@ -21,7 +25,12 @@ interface DestinationDetailsProps {
 
 const PriceCard = ({ data }: DestinationDetailsProps) => {
   const destination = data.data;
-  
+
+  const { data: session } = authClient.useSession();
+  const user = session?.user;
+
+  const [loading, setLoading] = useState(false);
+
   const departureDate = new Date(
     `${destination.departureDate}T00:00:00`,
   ).toLocaleDateString("en-US", {
@@ -29,6 +38,45 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
     day: "numeric",
     year: "numeric",
   });
+
+  const handleBooking = async () => {
+    if (!user) {
+      toast.error("Please login first to book this trip.");
+      return;
+    }
+
+    const bookingData = {
+      userId: user.id,
+      userName: user.name,
+      email: user.email,
+      destinationId: destination._id, // _id নয়, destinationId
+      destinationName: destination.name,
+      country: destination.country,
+      price: destination.price,
+      duration: destination.duration,
+      departureDate: destination.departureDate,
+      bookingDate: new Date(),
+    };
+
+    try {
+      setLoading(true);
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/booking`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookingData),
+      });
+
+      if (!res.ok) throw new Error("Booking failed");
+
+      toast.success("Trip booked successfully!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:sticky lg:top-24">
       <p className="text-sm font-medium text-slate-500">Trip price</p>
@@ -60,12 +108,13 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
           <span className="font-medium text-slate-900">{departureDate}</span>
         </div>
       </div>
-
       <button
         type="button"
+        onClick={handleBooking}
+        disabled={loading}
         className="mt-7 w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
       >
-        Book This Trip
+        {loading ? "Booking..." : "Book This Trip"}
       </button>
 
       <p className="mt-3 text-center text-xs text-slate-500">

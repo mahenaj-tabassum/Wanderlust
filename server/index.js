@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
-import { MongoClient, ObjectId } from "mongodb";
 import "dotenv/config";
+import { MongoClient, ObjectId } from "mongodb";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -21,6 +21,7 @@ async function connectToMongoDB() {
 
 const db = await connectToMongoDB();
 const destinationCollection = db.collection("destination");
+const bookingCollection = db.collection("bookings");
 
 // Home route
 app.get("/", (req, res) => {
@@ -171,6 +172,22 @@ app.delete("/all-destinations/:id", async (req, res) => {
       message: "Failed to delete destination",
     });
   }
+});
+
+// Post the booking data to the Booking Collection
+app.post("/booking", async (req, res) => {
+  const data = req.body;
+  const result = await bookingCollection.insertOne(data);
+  res.send({ message: "success", data: result });
+});
+
+// Get Booking Data
+app.get("/booking", async (req, res) => {
+  const booking = await bookingCollection.find().toArray();
+  res.status(200).json({
+    message: "success",
+    data: booking,
+  });
 });
 
 // Start server
