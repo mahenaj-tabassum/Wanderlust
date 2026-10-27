@@ -7,13 +7,12 @@ import {
 } from "lucide-react";
 
 export type Destination = {
-  id: number;
+  _id: string;
   name: string;
   country: string;
   price: number;
-  rating: number;
   days: number;
-  image: string;
+  imageUrl: string;
   tag: string;
 };
 
@@ -31,74 +30,7 @@ export type Testimonial = {
   avatar: string;
 };
 
-export const destinations: Destination[] = [
-  {
-    id: 1,
-    name: "Bali Paradise",
-    country: "Indonesia",
-    price: 1290,
-    rating: 4.9,
-    days: 7,
-    image:
-      "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=800&q=80",
-    tag: "Popular",
-  },
-  {
-    id: 2,
-    name: "Santorini Escape",
-    country: "Greece",
-    price: 1850,
-    rating: 4.8,
-    days: 6,
-    image:
-      "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=800&q=80",
-    tag: "Romantic",
-  },
-  {
-    id: 3,
-    name: "Maldives Retreat",
-    country: "Maldives",
-    price: 2400,
-    rating: 5.0,
-    days: 5,
-    image:
-      "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=800&q=80",
-    tag: "Luxury",
-  },
-  {
-    id: 4,
-    name: "Kyoto Journey",
-    country: "Japan",
-    price: 1650,
-    rating: 4.7,
-    days: 8,
-    image:
-      "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=800&q=80",
-    tag: "Culture",
-  },
-  {
-    id: 5,
-    name: "Swiss Alps",
-    country: "Switzerland",
-    price: 2100,
-    rating: 4.9,
-    days: 6,
-    image:
-      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80",
-    tag: "Adventure",
-  },
-  {
-    id: 6,
-    name: "Cox's Bazar",
-    country: "Bangladesh",
-    price: 320,
-    rating: 4.6,
-    days: 3,
-    image:
-      "https://images.unsplash.com/photo-1519046904884-53103b34b206?auto=format&fit=crop&w=800&q=80",
-    tag: "Beach",
-  },
-];
+
 
 export const features: Feature[] = [
   {
