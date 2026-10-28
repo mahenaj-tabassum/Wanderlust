@@ -40,16 +40,19 @@ const verifyToken = async (req, res, next) => {
   try {
     // Payload : User Information
     const { payload } = await jwtVerify(token, JWKS);
-    next()
+    next();
   } catch (error) {
     return res.status(500).send({ message: "Internal Server Error!" });
-
   }
 };
 
 // Home route
 app.get("/", (req, res) => {
-  res.send("HOME");
+  res.status(200).json({
+    message: "Server is running",
+    status: "ok",
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Add a destination
@@ -199,7 +202,7 @@ app.delete("/all-destinations/:id", async (req, res) => {
 });
 
 // Post the booking data to the Booking Collection
-app.post("/booking", verifyToken,async (req, res) => {
+app.post("/booking", verifyToken, async (req, res) => {
   try {
     const bookingData = await req.body;
 
@@ -238,7 +241,7 @@ app.post("/booking", verifyToken,async (req, res) => {
 
 // Get Booking Data
 // GET http://localhost:5000/bookings?userId=123
-app.get("/bookings", verifyToken,async (req, res) => {
+app.get("/bookings", verifyToken, async (req, res) => {
   try {
     const userId = req.query.userId;
     if (!userId) {
@@ -261,7 +264,7 @@ app.get("/bookings", verifyToken,async (req, res) => {
 });
 
 // Cancel a booking
-app.delete("/booking/:id", verifyToken,async (req, res) => {
+app.delete("/booking/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.query.userId;
@@ -299,14 +302,15 @@ app.delete("/booking/:id", verifyToken,async (req, res) => {
   }
 });
 
-
 // API URL : http://localhost:5000/featured-destination
-app.get("/featured-destination", async (req,res)=>{
-  const result = await destinationCollection.find().limit(5).toArray()
-  res.send({data: result})
-})
+app.get("/featured-destination", async (req, res) => {
+  const result = await destinationCollection.find().limit(5).toArray();
+  res.send({ data: result });
+});
 
 // Start server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+export default app;

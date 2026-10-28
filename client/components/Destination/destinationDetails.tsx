@@ -109,7 +109,7 @@ export default function DestinationDetails({ data }: DestinationDetailsProps) {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/all-destinations/${destination._id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/all-destinations/${destination._id}`,
         {
           method: "PATCH",
           headers: {
@@ -146,7 +146,7 @@ export default function DestinationDetails({ data }: DestinationDetailsProps) {
         {
           method: "DELETE",
           headers: await getAuthHeaders(),
-          },
+        },
       );
 
       if (!response.ok) {
