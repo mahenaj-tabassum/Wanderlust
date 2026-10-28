@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
 
 interface Destination {
   _id: string;
@@ -23,7 +24,46 @@ interface DestinationDetailsProps {
   };
 }
 
+/* HTTP status অনুযায়ী ব্যবহারকারীর জন্য মেসেজ */
+const getBookingErrorMessage = (status: number, serverMessage?: string) => {
+  switch (status) {
+    case 400:
+      return {
+        title: "Booking details are incomplete",
+        description:
+          serverMessage ??
+          "Some required information is missing. Please refresh the page and try again.",
+      };
+    case 401:
+      return {
+        title: "Your session has expired",
+        description: "Please log out, log in again, and then book this trip.",
+      };
+    case 404:
+      return {
+        title: "Destination not found",
+        description:
+          "This trip may have been removed. Please go back and choose another one.",
+      };
+    case 409:
+      return {
+        title: "Already booked",
+        description:
+          "You have already booked this trip. You can see it in My bookings.",
+      };
+    default:
+      return {
+        title: "Booking failed",
+        description:
+          status >= 500
+            ? "Our server ran into a problem. Please try again in a few moments."
+            : (serverMessage ?? "Something went wrong. Please try again."),
+      };
+  }
+};
+
 const PriceCard = ({ data }: DestinationDetailsProps) => {
+  const router = useRouter();
   const bookingInProgress = useRef(false);
   const [loading, setLoading] = useState(false);
   const destination = data.data;
@@ -40,20 +80,24 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
   });
 
   const handleBooking = async () => {
+    // 1. Login check
     if (!user) {
-      toast.error("Please login first to book this trip.");
+      toast.error("Login required", {
+        description: "Please log in first to book this trip.",
+      });
       return;
     }
 
-    // Prevent rapid repeated clicks before React re-renders
+    // 2. Prevent rapid repeated clicks before React re-renders
     if (bookingInProgress.current) return;
+    bookingInProgress.current = true;
     setLoading(true);
 
     const bookingData = {
       userId: user.id,
       userName: user.name,
       email: user.email,
-      destinationId: destination._id, // _id নয়, destinationId
+      destinationId: destination._id,
       destinationName: destination.name,
       destinationImage: destination.imageUrl,
       country: destination.country,
@@ -64,33 +108,79 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
     };
 
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/booking`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookingData),
-      });
+      // 3. JWT token আনো
+      const { data: tokenData, error: tokenError } = await authClient.token();
+      const jwtToken = tokenData?.token;
 
-      if (!res.ok) throw new Error("Booking failed");
-
-      const result = await res.json();
-
-      if (res.status === 409) {
-        toast.error("You have already booked this trip.");
+      if (tokenError || !jwtToken) {
+        toast.error("Could not verify your account", {
+          description: "Please log out, log in again, and try once more.",
+        });
         return;
       }
 
+      // 4. Booking request পাঠাও
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/booking`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwtToken}`,
+        },
+        body: JSON.stringify(bookingData),
+      });
+
+      // response body JSON না হলেও যেন ক্র্যাশ না করে
+      const result: { message?: string } = await res.json().catch(() => ({}));
+
+      // 5. Status অনুযায়ী মেসেজ
       if (!res.ok) {
-        throw new Error(result.message || "Booking failed");
+        const { title, description } = getBookingErrorMessage(
+          res.status,
+          result.message,
+        );
+
+        if (res.status === 409) {
+          // আগেই বুক করা, এটা ভুল না, তথ্য
+          toast.info(title, {
+            description,
+            action: {
+              label: "My bookings",
+              onClick: () => router.push("/my-booking"),
+            },
+          });
+        } else {
+          toast.error(title, { description });
+        }
+        return;
       }
 
-      toast.success("Trip booked successfully!");
+      // 6. সফল
+      toast.success("Trip booked successfully!", {
+        description: `Your trip to ${destination.name}, ${destination.country} is confirmed for ${departureDate}.`,
+        action: {
+          label: "View booking",
+          onClick: () => router.push("/my-booking"),
+        },
+      });
     } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong. Please try again.");
+      console.error("Booking error:", error);
+
+      // fetch নিজেই ব্যর্থ হলে (ইন্টারনেট নেই / সার্ভার বন্ধ) TypeError আসে
+      if (error instanceof TypeError) {
+        toast.error("Cannot reach the server", {
+          description: "Please check your internet connection and try again.",
+        });
+      } else {
+        toast.error("Something went wrong", {
+          description: "We could not complete your booking. Please try again.",
+        });
+      }
     } finally {
+      bookingInProgress.current = false;
       setLoading(false);
     }
   };
+
   return (
     <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:sticky lg:top-24">
       <p className="text-sm font-medium text-slate-500">Trip price</p>
@@ -122,11 +212,12 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
           <span className="font-medium text-slate-900">{departureDate}</span>
         </div>
       </div>
+
       <button
         type="button"
         onClick={handleBooking}
         disabled={loading}
-        className="mt-7 w-full rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+        className="mt-7 w-full cursor-pointer rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
       >
         {loading ? "Booking..." : "Book This Trip"}
       </button>

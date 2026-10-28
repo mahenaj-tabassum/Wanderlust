@@ -27,19 +27,29 @@ interface PageProps {
 export default async function DestinationDetailsPage({ params }: PageProps) {
   const { id } = await params;
 
-  // Server Side token retrieve
+  // Server side token retrieve
   const tokenResponse = await auth.api.getToken({
     headers: await headers(),
   });
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/all-destinations/${id}`, {
-    headers: {
-      Authorization: `Bearer ${tokenResponse?.token}`,
+
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/all-destinations/${id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${tokenResponse?.token}`,
+      },
       cache: "no-store",
     },
-  });
+  );
+
+  if (res.status === 404) {
+    notFound();
+  }
 
   if (!res.ok) {
-    notFound();
+    throw new Error(
+      `Failed to fetch destination: ${res.status} ${res.statusText}`,
+    );
   }
 
   const response: DestinationResponse = await res.json();

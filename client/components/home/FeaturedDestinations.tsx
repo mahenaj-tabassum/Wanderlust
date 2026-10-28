@@ -6,17 +6,15 @@ import type { Destination } from "@/lib/data";
 
 export default async function FeaturedDestinations() {
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL}/all-destinations`,
+    `${process.env.NEXT_PUBLIC_API_URL}/featured-destination`,
   );
 
   if (!response.ok) {
-    throw new Error("Failed to fetch destinations");
+    throw new Error(`Failed to fetch destinations: ${response.status}`);
   }
 
   const result = await response.json();
-  const data: Destination[] = result.data ?? [];
-  const featuredDestinations = data.slice(0, 6);
-  console.log(featuredDestinations);
+  const featuredDestinations: Destination[] = result.data ?? [];
 
   return (
     <section className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
