@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { MongoClient } from "mongodb";
+import { jwt } from "better-auth/plugins";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import "dotenv/config";
 
@@ -23,4 +24,17 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
     },
   },
+  plugins: [jwt()],
+  session: {
+    cookieCache: {
+      enabled: true,
+      strategy: "jwt",
+      maxAge: 7 * 24 * 60 * 60
+    },
+  },
 });
+
+/**
+ * Je token pabo seta cookie r moddhe save kore rakhtesi. Now user er session depend korbe JWt er upor
+ * and seta cookie er moddhe save(cache) thaktese.
+ */

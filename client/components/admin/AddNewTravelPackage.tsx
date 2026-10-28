@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { authClient } from "@/lib/auth-client";
 
 const categories = [
   "Beach",
@@ -112,10 +113,17 @@ export default function AddNewTravelPackage() {
     const payload = { ...values, price: Number(values.price) };
 
     try {
+      const { data: tokenData } = await authClient.token();
+      const jwtToken = tokenData?.token;
+
+      if (!jwtToken) {
+        throw new Error("Jwt Token not found");
+      }
       const response = await fetch("http://localhost:5000/add-destination", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${jwtToken}`,
         },
         body: JSON.stringify(payload),
       });

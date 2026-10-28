@@ -1,4 +1,6 @@
-import DestinationDetails from "@/components/Destination/destinationDetails";
+import DestinationDetails from "@/components/Destination/DestinationDetails";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
 interface Destination {
@@ -25,7 +27,16 @@ interface PageProps {
 export default async function DestinationDetailsPage({ params }: PageProps) {
   const { id } = await params;
 
-  const res = await fetch(`http://localhost:5000/all-destinations/${id}`);
+  // Server Side token retrieve
+  const tokenResponse = await auth.api.getToken({
+    headers: await headers(),
+  });
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/all-destinations/${id}`, {
+    headers: {
+      Authorization: `Bearer ${tokenResponse?.token}`,
+      cache: "no-store",
+    },
+  });
 
   if (!res.ok) {
     notFound();

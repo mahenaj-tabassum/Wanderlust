@@ -23,8 +23,16 @@ export const useMyBookings = () => {
       setLoading(true);
       setError(null);
 
+      const { data } = await authClient.token();
+      const jwtToken = data?.token;
+      if (!jwtToken) throw new Error("JWT Token not found!");
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/bookings?userId=${user.id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${jwtToken}`,
+          },
+        },
       );
       if (!res.ok) {
         toast.error("Failed to load bookings!");
@@ -72,9 +80,20 @@ export const useMyBookings = () => {
     try {
       setCancellingId(booking._id);
 
+      const { data } = await authClient.token();
+
+      const jwtToken = data?.token;
+
+      if (!jwtToken) {
+        throw new Error("JWT Token not found!");
+      }
+
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/booking/${booking._id}?userId=${user.id}`,
-        { method: "DELETE" },
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${jwtToken}` },
+        },
       );
       if (!res.ok) throw new Error("Cancel failed");
 

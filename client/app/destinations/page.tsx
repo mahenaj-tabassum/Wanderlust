@@ -1,4 +1,4 @@
-import Destinations from "@/components/Destination/destinations";
+import Destinations from "@/components/Destination/Destinations";
 
 const DestinationsPage = () => {
   return <Destinations />;

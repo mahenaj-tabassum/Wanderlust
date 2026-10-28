@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import { MongoClient, ObjectId } from "mongodb";
+import { createRemoteJWKSet, jwtVerify } from "jose";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -22,6 +23,29 @@ async function connectToMongoDB() {
 const db = await connectToMongoDB();
 const destinationCollection = db.collection("destination");
 const bookingCollection = db.collection("bookings");
+
+const verifyToken = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) {
+    return res.status(401).send({ message: "Unauthorized!" });
+  }
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized!" });
+  }
+  const JWKS = createRemoteJWKSet(
+    new URL(`${process.env.BASE_URL}/api/auth/jwks`),
+  );
+  try {
+    // Payload : User Information
+    const { payload } = await jwtVerify(token, JWKS);
+    next()
+  } catch (error) {
+    return res.status(500).send({ message: "Internal Server Error!" });
+
+  }
+};
 
 // Home route
 app.get("/", (req, res) => {
@@ -66,7 +90,7 @@ app.get("/all-destinations", async (req, res) => {
 });
 
 // Get a destination by ID
-app.get("/all-destinations/:id", async (req, res) => {
+app.get("/all-destinations/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -175,7 +199,7 @@ app.delete("/all-destinations/:id", async (req, res) => {
 });
 
 // Post the booking data to the Booking Collection
-app.post("/booking", async (req, res) => {
+app.post("/booking", verifyToken,async (req, res) => {
   try {
     const bookingData = await req.body;
 
@@ -214,7 +238,7 @@ app.post("/booking", async (req, res) => {
 
 // Get Booking Data
 // GET http://localhost:5000/bookings?userId=123
-app.get("/bookings", async (req, res) => {
+app.get("/bookings", verifyToken,async (req, res) => {
   try {
     const userId = req.query.userId;
     if (!userId) {
@@ -237,7 +261,7 @@ app.get("/bookings", async (req, res) => {
 });
 
 // Cancel a booking
-app.delete("/booking/:id", async (req, res) => {
+app.delete("/booking/:id", verifyToken,async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.query.userId;
@@ -263,7 +287,7 @@ app.delete("/booking/:id", async (req, res) => {
         message: "Booking not found",
       });
     }
-     return res.status(200).json({
+    return res.status(200).json({
       message: "Booking cancelled successfully",
     });
   } catch (error) {
@@ -274,6 +298,13 @@ app.delete("/booking/:id", async (req, res) => {
     });
   }
 });
+
+
+// API URL : http://localhost:5000/featured-destination
+app.get("/featured-destination", async (req,res)=>{
+  const result = await destinationCollection.find().limit(5).toArray()
+  res.send({data: result})
+})
 
 // Start server
 app.listen(PORT, () => {

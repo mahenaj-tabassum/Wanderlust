@@ -30,6 +30,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label"; // npx shadcn@latest add label
 import PriceCard from "../Booking-Destinations/priceCard";
+import { authClient } from "@/lib/auth-client";
 
 interface Destination {
   _id: string;
@@ -96,6 +97,12 @@ export default function DestinationDetails({ data }: DestinationDetailsProps) {
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setFormData({ ...formData, [key]: e.target.value }),
   });
+
+  const getAuthHeaders = async () => {
+    const { data, error } = await authClient.token();
+    if (error || !data?.token) throw new Error("Not authenticated");
+    return { Authorization: `Bearer ${data.token}` };
+  };
   const handleEdit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSaving(true);
@@ -105,7 +112,10 @@ export default function DestinationDetails({ data }: DestinationDetailsProps) {
         `http://localhost:5000/all-destinations/${destination._id}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(await getAuthHeaders()),
+          },
           body: JSON.stringify({
             ...formData,
             price: Number(formData.price),
@@ -132,8 +142,11 @@ export default function DestinationDetails({ data }: DestinationDetailsProps) {
 
     try {
       const response = await fetch(
-        `http://localhost:5000/all-destinations/${destination._id}`,
-        { method: "DELETE" },
+        `${process.env.NEXT_PUBLIC_API_URL}/all-destinations/${destination._id}`,
+        {
+          method: "DELETE",
+          headers: await getAuthHeaders(),
+          },
       );
 
       if (!response.ok) {
