@@ -34,6 +34,41 @@ interface DestinationDetailsProps {
   };
 }
 
+type ToastAction = {
+  label: string;
+  onClick: () => void;
+};
+
+/* react-toastify has no `description` / `action` options,
+   so we render them as custom toast content */
+const showToast = (
+  type: "success" | "error" | "info",
+  title: string,
+  description?: string,
+  action?: ToastAction,
+) => {
+  toast[type](({ closeToast }) => (
+    <div>
+      <p className="font-bold">{title}</p>
+      {description && (
+        <p className="mt-0.5 text-sm opacity-80">{description}</p>
+      )}
+      {action && (
+        <button
+          type="button"
+          onClick={() => {
+            action.onClick();
+            closeToast?.();
+          }}
+          className="mt-2 cursor-pointer text-sm font-bold underline"
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
+  ));
+};
+
 /* HTTP status অনুযায়ী ব্যবহারকারীর জন্য মেসেজ */
 const getBookingErrorMessage = (status: number, serverMessage?: string) => {
   switch (status) {
@@ -94,9 +129,11 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
   const handleBooking = async () => {
     // 1. Login check
     if (!user) {
-      toast.error("Login required", {
-        description: "Please log in first to book this trip.",
-      });
+      showToast(
+        "error",
+        "Login required",
+        "Please log in first to book this trip.",
+      );
       return;
     }
 
@@ -126,9 +163,11 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
       const jwtToken = tokenData?.token;
 
       if (tokenError || !jwtToken) {
-        toast.error("Could not verify your account", {
-          description: "Please log out, log in again, and try once more.",
-        });
+        showToast(
+          "error",
+          "Could not verify your account",
+          "Please log out, log in again, and try once more.",
+        );
         return;
       }
 
@@ -155,40 +194,43 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
         if (res.status === 409) {
           // আগেই বুক করা, এটা ভুল না, তথ্য
           setBooked(true);
-          toast.info(title, {
-            description,
-            action: {
-              label: "My bookings",
-              onClick: () => router.push("/my-booking"),
-            },
+          showToast("info", title, description, {
+            label: "My bookings",
+            onClick: () => router.push("/my-booking"),
           });
         } else {
-          toast.error(title, { description });
+          showToast("error", title, description);
         }
         return;
       }
 
       // 6. সফল
       setBooked(true);
-      toast.success("Trip booked successfully!", {
-        description: `Your trip to ${destination.name}, ${destination.country} is confirmed for ${departureDate}.`,
-        action: {
+      showToast(
+        "success",
+        "Trip booked successfully!",
+        `Your trip to ${destination.name}, ${destination.country} is confirmed for ${departureDate}.`,
+        {
           label: "View booking",
           onClick: () => router.push("/my-booking"),
         },
-      });
+      );
     } catch (error) {
       console.error("Booking error:", error);
 
       // fetch নিজেই ব্যর্থ হলে (ইন্টারনেট নেই / সার্ভার বন্ধ) TypeError আসে
       if (error instanceof TypeError) {
-        toast.error("Cannot reach the server", {
-          description: "Please check your internet connection and try again.",
-        });
+        showToast(
+          "error",
+          "Cannot reach the server",
+          "Please check your internet connection and try again.",
+        );
       } else {
-        toast.error("Something went wrong", {
-          description: "We could not complete your booking. Please try again.",
-        });
+        showToast(
+          "error",
+          "Something went wrong",
+          "We could not complete your booking. Please try again.",
+        );
       }
     } finally {
       bookingInProgress.current = false;
