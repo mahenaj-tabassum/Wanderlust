@@ -1,23 +1,14 @@
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, X } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-
-const categories = [
-  "All",
-  "Beach",
-  "Adventure",
-  "Culture",
-  "Luxury",
-  "Romantic",
-  "Nature",
-];
+import { categoryList, getCategoryMeta } from "./category-meta";
 
 interface SearchAndFiltersProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
   selectedCategory: string;
   onCategoryChange: (category: string) => void;
+  className?: string;
 }
 
 const Search_and_Filters = ({
@@ -25,48 +16,61 @@ const Search_and_Filters = ({
   onSearchChange,
   selectedCategory,
   onCategoryChange,
+  className = "",
 }: SearchAndFiltersProps) => {
   return (
-    <div className="mb-6 flex flex-col gap-5">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            All destinations
-          </h2>
-          <p className="mt-1 text-sm text-slate-500">
-            Find a place that matches your travel style.
-          </p>
-        </div>
+    <div
+      className={`relative z-30 mb-6 rounded-3xl bg-white/90 p-4 shadow-xl shadow-cyan-200/50 ring-1 ring-cyan-100 backdrop-blur-xl sm:p-5 ${className}`}
+    >
+      {/* Search */}
+      <div className="relative">
+        <span className="pointer-events-none absolute left-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-xl bg-cyan-100 text-cyan-600">
+          <Search className="size-4" />
+        </span>
 
-        <div className="relative w-full sm:max-w-sm">
-          <Search className="absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-          <Input
-            value={searchQuery}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="Search places or countries..."
-            className="h-11 rounded-xl border-slate-200 bg-white pl-10 focus-visible:ring-emerald-500"
-          />
-        </div>
+        <Input
+          value={searchQuery}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="Search places, countries or categories..."
+          aria-label="Search destinations"
+          className="h-12 rounded-2xl border-0 bg-cyan-50/70 pl-14 pr-11 text-sm font-semibold text-slate-800 placeholder:font-medium placeholder:text-slate-400 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-cyan-400"
+        />
+
+        {searchQuery && (
+          <button
+            type="button"
+            aria-label="Clear search"
+            onClick={() => onSearchChange("")}
+            className="absolute right-3 top-1/2 flex size-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-slate-200/70 text-slate-600 transition-colors hover:bg-orange-100 hover:text-orange-600"
+          >
+            <X className="size-4" />
+          </button>
+        )}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <SlidersHorizontal className="mr-1 size-4 text-slate-500" />
+      {/* Category chips */}
+      <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden">
+        {categoryList.map((category) => {
+          const active = selectedCategory === category;
+          const meta = category === "All" ? null : getCategoryMeta(category);
 
-        {categories.map((category) => (
-          <Button
-            key={category}
-            variant={selectedCategory === category ? "default" : "outline"}
-            size="sm"
-            onClick={() => onCategoryChange(category)}
-            className={
-              selectedCategory === category
-                ? "rounded-full bg-emerald-600 px-4 hover:bg-emerald-700"
-                : "rounded-full border-slate-200 bg-white px-4 text-slate-600 hover:bg-slate-100"
-            }
-          >
-            {category}
-          </Button>
-        ))}
+          return (
+            <button
+              key={category}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onCategoryChange(category)}
+              className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition-all ${
+                active
+                  ? `${meta ? meta.chip : "bg-linear-to-r from-cyan-500 to-sky-500 text-white"} -translate-y-0.5 shadow-lg`
+                  : "bg-white text-slate-600 ring-1 ring-cyan-100 hover:-translate-y-0.5 hover:bg-cyan-50 hover:text-cyan-700"
+              }`}
+            >
+              <span aria-hidden="true">{meta ? meta.emoji : "🌍"}</span>
+              {category}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { LogOut, Menu } from "lucide-react";
-import { toast } from "sonner";
+import { usePathname, useRouter } from "next/navigation";
+import { Compass, LogOut, Menu } from "lucide-react";
+import { toast } from "react-toastify";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -18,28 +18,11 @@ import {
 } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
-
-const links = [
-  { label: "Home", href: "/" },
-  { label: "Destinations", href: "/destinations" },
-  { label: "Add Destinations", href: "/addPackage" },
-  { label: "My Booking", href: "/my-booking" },
-  { label: "Contact", href: "/contact" },
-];
-
-// "Mahenaj Tabassum" -> "MT"
-function getInitials(name?: string | null) {
-  if (!name) return "U";
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
+import { getInitials, isActivePath, navLinks } from "./nav-config";
 
 export default function MobileNav() {
   const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
 
@@ -70,7 +53,7 @@ export default function MobileNav() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger
-        className="inline-flex size-9 cursor-pointer items-center justify-center rounded-md text-slate-900 transition-colors hover:bg-emerald-50 hover:text-emerald-700 lg:hidden"
+        className="inline-flex size-10 cursor-pointer items-center justify-center rounded-full bg-cyan-50 text-cyan-700 transition-colors hover:bg-cyan-100 lg:hidden"
         aria-label="Open menu"
       >
         <Menu className="size-5" />
@@ -78,45 +61,70 @@ export default function MobileNav() {
 
       <SheetContent
         side="right"
-        className="flex w-70 flex-col border-l border-slate-200 bg-white p-0 sm:w-80"
+        className="flex w-72 flex-col border-l border-cyan-100 bg-linear-to-b from-cyan-50 via-white to-orange-50 p-0 sm:w-80"
       >
-        <SheetHeader className="border-b border-slate-200 bg-slate-50 px-6 py-5 text-left">
-          <SheetTitle className="text-xl font-bold tracking-tight text-slate-900">
-            Wanderlust
-            <span className="text-emerald-600">.</span>
-          </SheetTitle>
+        <div className="h-1 bg-linear-to-r from-cyan-400 via-amber-300 to-orange-400" />
+
+        <SheetHeader className="px-6 pb-3 pt-5 text-left">
+          <div className="flex items-center gap-2.5">
+            <span className="flex size-9 rotate-3 items-center justify-center rounded-xl bg-linear-to-br from-cyan-400 to-sky-500 text-white shadow-md shadow-cyan-300/60">
+              <Compass className="size-5" />
+            </span>
+            <SheetTitle className="text-xl font-extrabold tracking-tight text-slate-900">
+              Wanderlust<span className="text-orange-500">.</span>
+            </SheetTitle>
+          </div>
           <SheetDescription className="text-sm text-slate-500">
             Discover your next adventure.
           </SheetDescription>
         </SheetHeader>
 
-        <nav className="flex flex-col gap-1 px-4 py-5">
-          {links.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className="rounded-lg px-4 py-3 text-sm font-medium text-slate-700 transition-colors hover:bg-emerald-50 hover:text-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <nav className="flex flex-col gap-1.5 px-4 py-3">
+          {navLinks.map((link) => {
+            const active = isActivePath(pathname, link.href);
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setOpen(false)}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400",
+                  active
+                    ? "bg-white text-cyan-700 shadow-sm ring-1 ring-cyan-100"
+                    : "text-slate-600 hover:bg-white/80 hover:text-cyan-700",
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex size-8 items-center justify-center rounded-xl transition-colors",
+                    active
+                      ? "bg-linear-to-br from-cyan-400 to-sky-500 text-white"
+                      : "bg-cyan-100/70 text-cyan-600",
+                  )}
+                >
+                  <Icon className="size-4" />
+                </span>
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <Separator className="bg-slate-200" />
+        <Separator className="bg-cyan-100" />
 
         {/* Account area: loading, signed in, or signed out */}
         {isPending ? (
           <div className="px-4 py-5">
-            <div className="h-14 animate-pulse rounded-xl bg-slate-100" />
+            <div className="h-14 animate-pulse rounded-2xl bg-cyan-100/60" />
           </div>
         ) : user ? (
           <div className="flex flex-col gap-3 px-4 py-5">
-            {/* Profile card */}
             <Link
               href="/profile"
               onClick={() => setOpen(false)}
-              className="flex items-center gap-3 rounded-xl bg-slate-50 p-3 transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+              className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm ring-1 ring-cyan-100 transition-all hover:ring-cyan-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
             >
               {user.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -124,16 +132,16 @@ export default function MobileNav() {
                   src={user.image}
                   alt={user.name ?? "Profile photo"}
                   referrerPolicy="no-referrer"
-                  className="size-11 shrink-0 rounded-full object-cover"
+                  className="size-11 shrink-0 rounded-full object-cover ring-2 ring-cyan-200"
                 />
               ) : (
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-sm font-semibold text-white">
+                <span className="flex size-11 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-orange-400 to-amber-400 text-sm font-bold text-white ring-2 ring-orange-200">
                   {getInitials(user.name)}
                 </span>
               )}
 
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900">
+                <p className="truncate text-sm font-bold text-slate-900">
                   {user.name}
                 </p>
                 <p className="truncate text-xs text-slate-500">{user.email}</p>
@@ -145,7 +153,7 @@ export default function MobileNav() {
               variant="outline"
               onClick={handleSignOut}
               disabled={isSigningOut}
-              className="w-full cursor-pointer border-slate-200 bg-white text-red-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+              className="w-full cursor-pointer rounded-full border-rose-200 bg-white font-semibold text-rose-600 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-700"
             >
               <LogOut className="size-4" />
               {isSigningOut ? "Logging out..." : "Log out"}
@@ -158,7 +166,7 @@ export default function MobileNav() {
               onClick={() => setOpen(false)}
               className={cn(
                 buttonVariants({ variant: "outline" }),
-                "w-full border-slate-200 bg-white text-slate-900 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700",
+                "w-full rounded-full border-cyan-200 bg-white font-semibold text-cyan-700 hover:border-cyan-400 hover:bg-cyan-50 hover:text-cyan-800",
               )}
             >
               Log in
@@ -169,7 +177,7 @@ export default function MobileNav() {
               onClick={() => setOpen(false)}
               className={cn(
                 buttonVariants(),
-                "w-full bg-emerald-600 text-white hover:bg-emerald-700",
+                "w-full rounded-full bg-linear-to-r from-orange-500 to-amber-400 font-bold text-white shadow-md shadow-orange-300/50 hover:brightness-105",
               )}
             >
               Sign up
@@ -178,8 +186,8 @@ export default function MobileNav() {
         )}
 
         <div className="mt-auto px-6 pb-6 pt-2">
-          <p className="text-center text-xs text-slate-500">
-            Your next journey starts here.
+          <p className="text-center text-xs font-medium text-slate-500">
+            Your next journey starts here ✈️
           </p>
         </div>
       </SheetContent>

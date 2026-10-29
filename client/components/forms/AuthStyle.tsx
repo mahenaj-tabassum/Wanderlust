@@ -3,9 +3,23 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Eye, EyeOff, Loader2, MapPin } from "lucide-react";
+import {
+  CircleAlert,
+  Compass,
+  Eye,
+  EyeOff,
+  Heart,
+  Loader2,
+  Lock,
+  Mail,
+  Plane,
+  ShieldCheck,
+  Ticket,
+  User,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 // Adjust this path to wherever you created your Better Auth client:
@@ -22,6 +36,7 @@ interface AuthStyleProps {
 // Everything that changes between the two modes lives here.
 const content = {
   in: {
+    emoji: "👋",
     title: "Welcome back",
     subtitle: "Sign in to pick up your trip planning.",
     submit: "Sign in",
@@ -29,8 +44,12 @@ const content = {
     switchText: "New to Wanderlust?",
     switchLink: "Create an account",
     switchHref: "/sign-up",
+    panelTag: "Good to see you again",
+    panelTitle: "Your next adventure is waiting.",
+    panelText: "Sign in to see your bookings and keep exploring new places.",
   },
   up: {
+    emoji: "✈️",
     title: "Create your account",
     subtitle: "Save destinations and plan your next trip.",
     submit: "Create account",
@@ -38,8 +57,40 @@ const content = {
     switchText: "Already have an account?",
     switchLink: "Sign in",
     switchHref: "/sign-in",
+    panelTag: "Join Wanderlust",
+    panelTitle: "Start planning your dream trip.",
+    panelText:
+      "Create a free account and turn your travel wishlist into plans.",
   },
 } as const;
+
+const perks: { icon: LucideIcon; label: string }[] = [
+  { icon: Heart, label: "Save places you love" },
+  { icon: Zap, label: "Book trips in minutes" },
+  { icon: Ticket, label: "Manage bookings in one place" },
+];
+
+const strengthLabels = ["Too short", "Weak", "Okay", "Good", "Strong"];
+const strengthColors = [
+  "bg-rose-400",
+  "bg-rose-400",
+  "bg-orange-400",
+  "bg-amber-400",
+  "bg-emerald-500",
+];
+
+// Shared field styles (matches the add-package form)
+const inputClass =
+  "h-12 rounded-2xl border-0 bg-cyan-50/70 pl-12 text-sm font-semibold text-slate-800 transition-colors placeholder:font-medium placeholder:text-slate-400 hover:bg-cyan-50 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-cyan-400";
+const labelClass = "text-sm font-bold text-slate-700";
+
+function IconTile({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    <span className="pointer-events-none absolute left-2 top-1/2 z-10 flex size-8 -translate-y-1/2 items-center justify-center rounded-xl bg-white text-cyan-600 shadow-sm">
+      <Icon className="size-4" />
+    </span>
+  );
+}
 
 function GoogleIcon() {
   return (
@@ -90,6 +141,11 @@ const AuthStyle = ({ mode }: AuthStyleProps) => {
 
   const isBusy = pending !== null;
 
+  // Simple password strength (sign up only): length, capital, number, symbol
+  const strength = [/.{8,}/, /[A-Z]/, /[0-9]/, /[^A-Za-z0-9]/].filter((rule) =>
+    rule.test(password),
+  ).length;
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
@@ -127,44 +183,119 @@ const AuthStyle = ({ mode }: AuthStyleProps) => {
     }
   };
 
+  const oauthButton =
+    "flex h-12 cursor-pointer items-center justify-center gap-2 rounded-2xl bg-white text-sm font-bold text-slate-700 shadow-sm ring-1 ring-cyan-100 transition-all hover:-translate-y-0.5 hover:bg-cyan-50 hover:ring-cyan-300 disabled:pointer-events-none disabled:opacity-60";
+
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-4 py-10">
-      {/* Soft emerald glow behind the card */}
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-0 size-[520px] -translate-x-1/2 -translate-y-1/3 rounded-full bg-emerald-200/40 blur-3xl"
-      />
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-linear-to-br from-cyan-50 via-white to-orange-50 px-4 py-10">
+      {/* Background blobs */}
+      <span className="pointer-events-none absolute -left-24 -top-24 size-96 rounded-full bg-cyan-200/50 blur-3xl" />
+      <span className="pointer-events-none absolute -bottom-24 -right-24 size-96 rounded-full bg-orange-200/60 blur-3xl" />
 
-      <div className="relative w-full max-w-md">
-        {/* Brand */}
-        <Link
-          href="/"
-          className="mx-auto mb-6 flex w-fit items-center gap-2 text-slate-900"
-        >
-          <span className="flex size-9 items-center justify-center rounded-xl bg-emerald-600 text-white">
-            <MapPin className="size-5" />
-          </span>
-          <span className="text-xl font-semibold tracking-tight">
-            Wanderlust
-          </span>
-        </Link>
+      <div className="relative grid w-full max-w-5xl overflow-hidden rounded-[2.5rem] bg-white shadow-2xl shadow-cyan-300/50 ring-1 ring-cyan-100 lg:grid-cols-[1fr_1.05fr]">
+        {/* ---------- Left: brand panel (desktop) ---------- */}
+        <aside className="relative hidden flex-col justify-between overflow-hidden bg-linear-to-br from-sky-600 via-cyan-500 to-orange-400 p-10 text-white lg:flex">
+          <span className="pointer-events-none absolute -left-16 -top-16 size-64 rounded-full bg-white/10" />
+          <span className="pointer-events-none absolute -right-12 top-16 size-48 rounded-full bg-linear-to-br from-amber-200 to-orange-300 opacity-90" />
+          <span className="pointer-events-none absolute left-1/2 top-10 size-2.5 rounded-full bg-amber-200" />
+          <svg
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-44 w-full"
+            viewBox="0 0 400 180"
+            preserveAspectRatio="none"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M0 120C80 160 140 80 220 110S340 150 400 100V180H0Z"
+              fill="#fff"
+              fillOpacity=".1"
+            />
+            <path
+              d="M20 150 C90 170 120 70 210 95 S320 60 372 38"
+              stroke="#fff"
+              strokeOpacity=".85"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray="1 10"
+            />
+          </svg>
+          <Plane className="pointer-events-none absolute bottom-28 right-8 size-10 -rotate-12 text-white" />
 
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-900/5 sm:p-8">
-          <div className="text-center">
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-              {text.title}
+          <Link
+            href="/"
+            className="group relative flex w-fit items-center gap-2.5 text-xl font-extrabold tracking-tight"
+          >
+            <span className="flex size-10 rotate-3 items-center justify-center rounded-xl bg-white text-cyan-600 shadow-lg transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
+              <Compass className="size-5" />
+            </span>
+            <span>
+              Wanderlust<span className="text-amber-200">.</span>
+            </span>
+          </Link>
+
+          <div className="relative">
+            <span className="inline-flex rounded-full bg-white/20 px-3.5 py-1.5 text-xs font-extrabold uppercase tracking-wider ring-1 ring-white/40 backdrop-blur">
+              {text.panelTag}
+            </span>
+            <h2 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight">
+              {text.panelTitle}
+            </h2>
+            <p className="mt-3 max-w-sm text-sm font-medium leading-6 text-white/90">
+              {text.panelText}
+            </p>
+
+            <ul className="mt-7 space-y-3">
+              {perks.map(({ icon: Icon, label }) => (
+                <li
+                  key={label}
+                  className="flex items-center gap-3 text-sm font-bold"
+                >
+                  <span className="flex size-9 items-center justify-center rounded-xl bg-white/20 ring-1 ring-white/30 backdrop-blur">
+                    <Icon className="size-4.5" />
+                  </span>
+                  {label}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className="relative flex items-center gap-2 text-xs font-bold text-white/90">
+            <ShieldCheck className="size-4" />
+            Your details are kept safe and secure.
+          </p>
+        </aside>
+
+        {/* ---------- Right: form ---------- */}
+        <section className="p-6 sm:p-10">
+          {/* Brand (mobile only) */}
+          <Link
+            href="/"
+            className="mx-auto mb-6 flex w-fit items-center gap-2.5 text-xl font-extrabold tracking-tight text-slate-900 lg:hidden"
+          >
+            <span className="flex size-10 rotate-3 items-center justify-center rounded-xl bg-linear-to-br from-cyan-400 to-sky-500 text-white shadow-md shadow-cyan-300/60">
+              <Compass className="size-5" />
+            </span>
+            <span>
+              Wanderlust<span className="text-orange-500">.</span>
+            </span>
+          </Link>
+
+          <div className="text-center lg:text-left">
+            <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+              {text.title} <span aria-hidden="true">{text.emoji}</span>
             </h1>
-            <p className="mt-1.5 text-sm text-slate-500">{text.subtitle}</p>
+            <p className="mt-2 text-sm font-medium text-slate-500">
+              {text.subtitle}
+            </p>
           </div>
 
           {/* OAuth */}
           <div className="mt-7 grid grid-cols-2 gap-3">
-            <Button
+            <button
               type="button"
-              variant="outline"
               disabled={isBusy}
               onClick={() => handleOAuth("google")}
-              className="h-11 cursor-pointer gap-2 border-slate-200 text-slate-700 hover:bg-slate-50"
+              className={oauthButton}
             >
               {pending === "google" ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -172,13 +303,12 @@ const AuthStyle = ({ mode }: AuthStyleProps) => {
                 <GoogleIcon />
               )}
               Google
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
-              variant="outline"
               disabled={isBusy}
               onClick={() => handleOAuth("github")}
-              className="h-11 cursor-pointer gap-2 border-slate-200 text-slate-700 hover:bg-slate-50"
+              className={oauthButton}
             >
               {pending === "github" ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -186,66 +316,66 @@ const AuthStyle = ({ mode }: AuthStyleProps) => {
                 <GitHubIcon />
               )}
               GitHub
-            </Button>
+            </button>
           </div>
 
           {/* Divider */}
           <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-slate-200" />
-            <span className="text-xs text-slate-500">or use your email</span>
-            <div className="h-px flex-1 bg-slate-200" />
+            <div className="h-0.5 flex-1 rounded-full bg-cyan-100" />
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              or use your email
+            </span>
+            <div className="h-0.5 flex-1 rounded-full bg-cyan-100" />
           </div>
 
           {/* Email + password */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {isSignUp && (
               <div className="space-y-1.5">
-                <Label
-                  htmlFor="name"
-                  className="text-sm font-medium text-slate-700"
-                >
+                <Label htmlFor="name" className={labelClass}>
                   Full name
                 </Label>
-                <Input
-                  id="name"
-                  type="text"
-                  autoComplete="name"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
-                  className="h-11 border-slate-200 focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20"
-                />
+                <div className="relative">
+                  <IconTile icon={User} />
+                  <Input
+                    id="name"
+                    type="text"
+                    autoComplete="name"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    className={inputClass}
+                  />
+                </div>
               </div>
             )}
 
             <div className="space-y-1.5">
-              <Label
-                htmlFor="email"
-                className="text-sm font-medium text-slate-700"
-              >
+              <Label htmlFor="email" className={labelClass}>
                 Email
               </Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                className="h-11 border-slate-200 focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20"
-              />
+              <div className="relative">
+                <IconTile icon={Mail} />
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className={inputClass}
+                />
+              </div>
             </div>
 
             <div className="space-y-1.5">
-              <Label
-                htmlFor="password"
-                className="text-sm font-medium text-slate-700"
-              >
+              <Label htmlFor="password" className={labelClass}>
                 Password
               </Label>
               <div className="relative">
+                <IconTile icon={Lock} />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -257,13 +387,13 @@ const AuthStyle = ({ mode }: AuthStyleProps) => {
                   placeholder={
                     isSignUp ? "At least 8 characters" : "Your password"
                   }
-                  className="h-11 border-slate-200 pr-11 focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20"
+                  className={`${inputClass} pr-12`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
                   aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-slate-400 transition-colors hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+                  className="absolute right-2 top-1/2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-white hover:text-cyan-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400"
                 >
                   {showPassword ? (
                     <EyeOff className="size-4" />
@@ -272,21 +402,43 @@ const AuthStyle = ({ mode }: AuthStyleProps) => {
                   )}
                 </button>
               </div>
+
+              {/* Strength meter (sign up) */}
+              {isSignUp && password && (
+                <div className="pt-1">
+                  <div className="flex gap-1.5">
+                    {[1, 2, 3, 4].map((step) => (
+                      <span
+                        key={step}
+                        className={`h-1.5 flex-1 rounded-full transition-colors ${
+                          strength >= step
+                            ? strengthColors[strength]
+                            : "bg-slate-200"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs font-bold text-slate-500">
+                    Password strength: {strengthLabels[strength]}
+                  </p>
+                </div>
+              )}
             </div>
 
             {error && (
               <p
                 role="alert"
-                className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700"
+                className="flex items-start gap-2 rounded-2xl bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700 ring-1 ring-rose-200"
               >
+                <CircleAlert className="mt-0.5 size-4 shrink-0" />
                 {error}
               </p>
             )}
 
-            <Button
+            <button
               type="submit"
               disabled={isBusy}
-              className="h-11 w-full cursor-pointer rounded-xl bg-emerald-600 text-base font-semibold text-white hover:bg-emerald-700"
+              className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-orange-500 to-amber-400 text-base font-bold text-white shadow-lg shadow-orange-300/60 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:brightness-105 disabled:pointer-events-none disabled:opacity-70"
             >
               {pending === "email" ? (
                 <>
@@ -296,19 +448,19 @@ const AuthStyle = ({ mode }: AuthStyleProps) => {
               ) : (
                 text.submit
               )}
-            </Button>
+            </button>
           </form>
-        </div>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
-          {text.switchText}{" "}
-          <Link
-            href={text.switchHref}
-            className="font-medium text-emerald-700 hover:text-emerald-800 hover:underline"
-          >
-            {text.switchLink}
-          </Link>
-        </p>
+          <p className="mt-6 text-center text-sm font-medium text-slate-500">
+            {text.switchText}{" "}
+            <Link
+              href={text.switchHref}
+              className="font-extrabold text-cyan-700 underline-offset-4 hover:text-orange-500 hover:underline"
+            >
+              {text.switchLink}
+            </Link>
+          </p>
+        </section>
       </div>
     </main>
   );

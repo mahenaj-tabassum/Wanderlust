@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 import { authClient } from "@/lib/auth-client";
 import type { Booking } from "./types";
 import { getDaysLeft } from "./utils";

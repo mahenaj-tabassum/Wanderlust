@@ -1,17 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  ArrowRight,
   BadgeCheck,
   CalendarDays,
   CircleAlert,
+  Compass,
+  ImageIcon,
+  Loader2,
   LogOut,
   Mail,
+  Plane,
+  PlusCircle,
+  RotateCcw,
+  Save,
+  Ticket,
+  User,
+  type LucideIcon,
 } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
 
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
@@ -36,12 +47,28 @@ export function getInitials(name?: string | null) {
 
 export function ProfileSkeleton() {
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-linear-to-b from-cyan-50/60 via-white to-orange-50/40 px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl animate-pulse">
-        <div className="h-44 rounded-3xl bg-slate-200 sm:h-56" />
-        <div className="mt-6 h-40 rounded-3xl bg-slate-200" />
+        <div className="h-64 rounded-[2.5rem] bg-cyan-100/70" />
+        <div className="mt-6 grid gap-6 lg:grid-cols-[340px_1fr]">
+          <div className="h-80 rounded-3xl bg-cyan-100/50" />
+          <div className="h-80 rounded-3xl bg-cyan-100/50" />
+        </div>
       </div>
     </main>
+  );
+}
+
+// Shared field styles (same as the add-package and auth forms)
+const inputClass =
+  "h-12 rounded-2xl border-0 bg-cyan-50/70 pl-12 text-sm font-semibold text-slate-800 transition-colors placeholder:font-medium placeholder:text-slate-400 hover:bg-cyan-50 focus-visible:bg-white focus-visible:ring-2 focus-visible:ring-cyan-400";
+const labelClass = "text-sm font-bold text-slate-700";
+
+function IconTile({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    <span className="pointer-events-none absolute left-2 top-1/2 z-10 flex size-8 -translate-y-1/2 items-center justify-center rounded-xl bg-white text-cyan-600 shadow-sm">
+      <Icon className="size-4" />
+    </span>
   );
 }
 
@@ -52,9 +79,14 @@ export default function ProfileContent({ user }: { user: ProfileUser }) {
   const [image, setImage] = useState(user.image ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  // Remembers a photo URL that failed to load, so we show initials instead
+  const [failedUrl, setFailedUrl] = useState("");
 
   const isDirty =
     name.trim() !== user.name || image.trim() !== (user.image ?? "");
+
+  const previewImage = image.trim();
+  const showPreviewImage = previewImage !== "" && failedUrl !== previewImage;
 
   const memberSince = new Date(user.createdAt).toLocaleDateString("en-US", {
     month: "long",
@@ -105,205 +137,330 @@ export default function ProfileContent({ user }: { user: ProfileUser }) {
     setIsSigningOut(false);
   };
 
+  const passRows = [
+    {
+      icon: Mail,
+      label: "Email",
+      value: user.email,
+      tone: "bg-cyan-100 text-cyan-600",
+    },
+    {
+      icon: CalendarDays,
+      label: "Member since",
+      value: memberSince,
+      tone: "bg-orange-100 text-orange-500",
+    },
+    {
+      icon: BadgeCheck,
+      label: "Email status",
+      value: user.emailVerified ? "Verified" : "Not verified",
+      tone: "bg-amber-100 text-amber-600",
+    },
+  ];
+
+  const shortcuts = [
+    {
+      href: "/my-booking",
+      icon: Ticket,
+      title: "My bookings",
+      hint: "See your trips",
+      tone: "from-cyan-400 to-sky-500",
+    },
+    {
+      href: "/addPackage",
+      icon: PlusCircle,
+      title: "Add destination",
+      hint: "Share a new place",
+      tone: "from-orange-500 to-amber-400",
+    },
+  ];
+
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+    <main className="min-h-screen bg-linear-to-b from-cyan-50/60 via-white to-orange-50/40 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
       <div className="mx-auto max-w-5xl">
-        {/* Cover + identity */}
-        <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
-          <div
+        {/* ---------- Cover + identity ---------- */}
+        <section className="relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-sky-600 via-cyan-500 to-orange-400 shadow-2xl shadow-cyan-300/50">
+          {/* Decoration */}
+          <span className="pointer-events-none absolute -left-16 -top-16 size-64 rounded-full bg-white/10" />
+          <span className="pointer-events-none absolute -right-10 -top-14 size-56 rounded-full bg-linear-to-br from-amber-200 to-orange-300 opacity-90" />
+          <span className="pointer-events-none absolute left-1/2 top-8 size-2.5 rounded-full bg-amber-200" />
+          <svg
+            className="pointer-events-none absolute inset-x-0 top-0 h-40 w-full"
+            viewBox="0 0 800 160"
+            preserveAspectRatio="none"
+            fill="none"
             aria-hidden="true"
-            className="h-40 mb-5 bg-linear-to-br from-emerald-700 via-emerald-600 to-emerald-400 sm:h-48"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.18) 0, transparent 40%), radial-gradient(circle at 85% 70%, rgba(255,255,255,0.14) 0, transparent 35%), linear-gradient(135deg, #047857, #059669 55%, #34d399)",
-            }}
-          />
+          >
+            <path
+              d="M20 130 C200 160 260 40 420 70 S650 20 760 40"
+              stroke="#fff"
+              strokeOpacity=".8"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeDasharray="1 10"
+            />
+          </svg>
+          <Plane className="pointer-events-none absolute right-24 top-6 hidden size-9 -rotate-12 text-white/90 md:block" />
 
-          <div className="px-6 pb-6 sm:px-8 sm:pb-8">
-            <div className="-mt-14 flex flex-col gap-4 sm:-mt-16 sm:flex-row sm:items-end sm:justify-between">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
-                {user.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={user.image}
-                    alt={user.name}
-                    referrerPolicy="no-referrer"
-                    className="size-28 shrink-0 rounded-full border-4 border-white bg-white object-cover shadow-sm sm:size-32"
-                  />
-                ) : (
-                  <span className="flex size-28 shrink-0 items-center justify-center rounded-full border-4 border-white bg-emerald-600 text-4xl font-semibold text-white shadow-sm sm:size-32">
-                    {getInitials(user.name)}
-                  </span>
-                )}
-
-                <div className="min-w-0 pb-1">
-                  <h1 className="truncate text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
-                    {user.name}
-                  </h1>
-                  <p className="mt-1 truncate text-slate-500">{user.email}</p>
-                </div>
-              </div>
-
-              {user.emailVerified ? (
-                <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700">
-                  <BadgeCheck className="size-4" />
-                  Verified
-                </span>
+          <div className="relative flex flex-col gap-5 px-6 pb-7 pt-28 sm:flex-row sm:items-end sm:justify-between sm:px-10 sm:pt-32">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+              {user.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={user.image}
+                  alt={user.name}
+                  referrerPolicy="no-referrer"
+                  className="size-28 shrink-0 rounded-full border-4 border-white bg-white object-cover shadow-xl shadow-sky-900/30 sm:size-32"
+                />
               ) : (
-                <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-sm font-medium text-amber-700">
-                  <CircleAlert className="size-4" />
-                  Email not verified
+                <span className="flex size-28 shrink-0 items-center justify-center rounded-full border-4 border-white bg-linear-to-br from-orange-400 to-amber-400 text-4xl font-extrabold text-white shadow-xl shadow-sky-900/30 sm:size-32">
+                  {getInitials(user.name)}
                 </span>
               )}
+
+              <div className="min-w-0 pb-1 text-white">
+                <h1 className="truncate text-2xl font-extrabold tracking-tight sm:text-4xl">
+                  {user.name}
+                </h1>
+                <p className="mt-1 flex items-center gap-1.5 truncate text-sm font-semibold text-white/90">
+                  <Mail className="size-4 shrink-0" />
+                  {user.email}
+                </p>
+              </div>
             </div>
+
+            {user.emailVerified ? (
+              <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-extrabold text-emerald-600 shadow-lg shadow-sky-900/20">
+                <BadgeCheck className="size-4" />
+                Verified
+              </span>
+            ) : (
+              <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-extrabold text-amber-600 shadow-lg shadow-sky-900/20">
+                <CircleAlert className="size-4" />
+                Email not verified
+              </span>
+            )}
           </div>
         </section>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[320px_1fr]">
-          {/* Left: account at a glance */}
-          <aside className="h-fit rounded-3xl border border-slate-200 bg-white p-6">
-            <h2 className="text-base font-semibold text-slate-900">
-              Account
-            </h2>
-
-            <dl className="mt-5 space-y-5">
-              <div className="flex items-start gap-3">
-                <Mail className="mt-0.5 size-5 text-emerald-600" />
-                <div className="min-w-0">
-                  <dt className="text-sm text-slate-500">Email</dt>
-                  <dd className="mt-0.5 truncate font-medium text-slate-900">
-                    {user.email}
-                  </dd>
-                </div>
+        <div className="mt-6 grid gap-6 lg:grid-cols-[340px_1fr]">
+          {/* ---------- Left: traveler pass ---------- */}
+          <aside className="h-fit overflow-hidden rounded-3xl bg-white shadow-xl shadow-cyan-100/70 ring-1 ring-cyan-100">
+            <div className="relative flex items-center justify-between overflow-hidden bg-linear-to-r from-cyan-500 to-sky-500 px-6 py-4 text-white">
+              <span className="pointer-events-none absolute -right-6 -top-8 size-24 rounded-full bg-white/15" />
+              <div className="relative">
+                <p className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-white/80">
+                  Traveler pass
+                </p>
+                <p className="text-lg font-extrabold tracking-tight">
+                  Wanderlust<span className="text-amber-200">.</span>
+                </p>
               </div>
+              <Compass className="relative size-8 text-white/90" />
+            </div>
 
-              <div className="flex items-start gap-3">
-                <CalendarDays className="mt-0.5 size-5 text-emerald-600" />
-                <div>
-                  <dt className="text-sm text-slate-500">Member since</dt>
-                  <dd className="mt-0.5 font-medium text-slate-900">
-                    {memberSince}
-                  </dd>
-                </div>
-              </div>
+            <div className="relative p-6">
+              {/* Stamp */}
+              <span
+                className={`pointer-events-none absolute right-4 top-4 flex size-20 rotate-12 flex-col items-center justify-center rounded-full border-4 text-[10px] font-extrabold uppercase tracking-wider ${
+                  user.emailVerified
+                    ? "border-double border-emerald-400/70 text-emerald-500"
+                    : "border-dashed border-amber-400/70 text-amber-500"
+                }`}
+              >
+                {user.emailVerified ? (
+                  <BadgeCheck className="size-6" />
+                ) : (
+                  <CircleAlert className="size-6" />
+                )}
+                {user.emailVerified ? "Verified" : "Pending"}
+              </span>
 
-              <div className="flex items-start gap-3">
-                <BadgeCheck className="mt-0.5 size-5 text-emerald-600" />
-                <div>
-                  <dt className="text-sm text-slate-500">Email status</dt>
-                  <dd className="mt-0.5 font-medium text-slate-900">
-                    {user.emailVerified ? "Verified" : "Not verified"}
-                  </dd>
-                </div>
-              </div>
-            </dl>
+              <dl className="space-y-5">
+                {passRows.map(({ icon: Icon, label, value, tone }) => (
+                  <div key={label} className="flex items-center gap-3 pr-16">
+                    <span
+                      className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tone}`}
+                    >
+                      <Icon className="size-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <dt className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        {label}
+                      </dt>
+                      <dd className="truncate text-sm font-extrabold text-slate-900">
+                        {value}
+                      </dd>
+                    </div>
+                  </div>
+                ))}
+              </dl>
+            </div>
           </aside>
 
-          {/* Right: edit + sign out */}
+          {/* ---------- Right: edit + shortcuts + sign out ---------- */}
           <div className="space-y-6">
-            <section className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8">
-              <h2 className="text-lg font-semibold text-slate-900">
-                Personal information
-              </h2>
-              <p className="mt-1 text-sm text-slate-500">
-                Update how your name and photo appear across Wanderlust.
-              </p>
+            <section className="rounded-3xl bg-white p-6 shadow-xl shadow-cyan-100/70 ring-1 ring-cyan-100 sm:p-8">
+              <div className="flex items-center gap-3">
+                <span className="flex size-11 -rotate-3 items-center justify-center rounded-2xl bg-linear-to-br from-cyan-400 to-sky-500 text-white shadow-md shadow-cyan-300/60">
+                  <User className="size-5" />
+                </span>
+                <div>
+                  <h2 className="text-lg font-extrabold text-slate-900">
+                    Personal information
+                  </h2>
+                  <p className="text-sm font-medium text-slate-500">
+                    Update how your name and photo appear across Wanderlust.
+                  </p>
+                </div>
+              </div>
 
-              <form onSubmit={handleSave} className="mt-6 space-y-5">
+              <form onSubmit={handleSave} className="mt-7 space-y-5">
                 <div className="space-y-1.5">
-                  <Label
-                    htmlFor="name"
-                    className="text-sm font-medium text-slate-700"
-                  >
+                  <Label htmlFor="name" className={labelClass}>
                     Full name
                   </Label>
-                  <Input
-                    id="name"
-                    required
-                    autoComplete="name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="h-11 border-slate-200 focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20"
-                  />
+                  <div className="relative">
+                    <IconTile icon={User} />
+                    <Input
+                      id="name"
+                      required
+                      autoComplete="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label
-                    htmlFor="email"
-                    className="text-sm font-medium text-slate-700"
-                  >
+                  <Label htmlFor="email" className={labelClass}>
                     Email
                   </Label>
-                  <Input
-                    id="email"
-                    value={user.email}
-                    disabled
-                    readOnly
-                    className="h-11 border-slate-200 bg-slate-50 text-slate-500"
-                  />
-                  <p className="text-xs text-slate-500">
+                  <div className="relative">
+                    <IconTile icon={Mail} />
+                    <Input
+                      id="email"
+                      value={user.email}
+                      disabled
+                      readOnly
+                      className={`${inputClass} bg-slate-100 text-slate-500 hover:bg-slate-100`}
+                    />
+                  </div>
+                  <p className="text-xs font-medium text-slate-400">
                     Your email is used to sign in and cannot be changed here.
                   </p>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label
-                    htmlFor="image"
-                    className="text-sm font-medium text-slate-700"
-                  >
+                  <Label htmlFor="image" className={labelClass}>
                     Photo URL
                   </Label>
-                  <Input
-                    id="image"
-                    type="url"
-                    placeholder="https://example.com/photo.jpg"
-                    value={image}
-                    onChange={(e) => setImage(e.target.value)}
-                    className="h-11 border-slate-200 focus-visible:border-emerald-600 focus-visible:ring-emerald-600/20"
-                  />
+                  <div className="flex items-center gap-3">
+                    {/* Live preview of the new photo */}
+                    {showPreviewImage ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={previewImage}
+                        alt="Photo preview"
+                        referrerPolicy="no-referrer"
+                        onError={() => setFailedUrl(previewImage)}
+                        className="size-12 shrink-0 rounded-full object-cover ring-2 ring-cyan-300 ring-offset-2"
+                      />
+                    ) : (
+                      <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-linear-to-br from-orange-400 to-amber-400 text-sm font-extrabold text-white ring-2 ring-orange-200 ring-offset-2">
+                        {getInitials(name)}
+                      </span>
+                    )}
+
+                    <div className="relative flex-1">
+                      <IconTile icon={ImageIcon} />
+                      <Input
+                        id="image"
+                        type="url"
+                        placeholder="https://example.com/photo.jpg"
+                        value={image}
+                        onChange={(e) => setImage(e.target.value)}
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">
-                  <Button
+                <div className="flex flex-col-reverse gap-3 border-t-2 border-dashed border-cyan-100 pt-5 sm:flex-row sm:justify-end">
+                  <button
                     type="button"
-                    variant="ghost"
                     onClick={handleReset}
                     disabled={!isDirty || isSaving}
-                    className="cursor-pointer"
+                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-slate-600 ring-1 ring-slate-200 transition-all hover:bg-rose-50 hover:text-rose-600 hover:ring-rose-200 disabled:pointer-events-none disabled:opacity-50"
                   >
+                    <RotateCcw className="size-4" />
                     Reset
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     type="submit"
                     disabled={!isDirty || isSaving}
-                    className="cursor-pointer bg-emerald-600 px-6 text-white hover:bg-emerald-700"
+                    className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-linear-to-r from-orange-500 to-amber-400 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-orange-300/60 transition-all hover:-translate-y-0.5 hover:brightness-105 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
                   >
+                    {isSaving ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Save className="size-4" />
+                    )}
                     {isSaving ? "Saving..." : "Save changes"}
-                  </Button>
+                  </button>
                 </div>
               </form>
             </section>
 
-            <section className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+            {/* Shortcuts */}
+            <section className="grid gap-4 sm:grid-cols-2">
+              {shortcuts.map(({ href, icon: Icon, title, hint, tone }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="group flex items-center gap-4 rounded-3xl bg-white p-5 shadow-lg shadow-cyan-100/70 ring-1 ring-cyan-100 transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-cyan-200/70"
+                >
+                  <span
+                    className={`flex size-12 shrink-0 -rotate-3 items-center justify-center rounded-2xl bg-linear-to-br text-white shadow-md transition-transform group-hover:rotate-3 group-hover:scale-110 ${tone}`}
+                  >
+                    <Icon className="size-6" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-extrabold text-slate-900">{title}</p>
+                    <p className="text-xs font-semibold text-slate-500">
+                      {hint}
+                    </p>
+                  </div>
+                  <ArrowRight className="size-5 text-slate-300 transition-all group-hover:translate-x-1 group-hover:text-cyan-500" />
+                </Link>
+              ))}
+            </section>
+
+            {/* Sign out */}
+            <section className="flex flex-col gap-4 rounded-3xl bg-linear-to-br from-rose-50 to-orange-50 p-6 ring-1 ring-rose-100 sm:flex-row sm:items-center sm:justify-between sm:p-8">
               <div>
-                <h2 className="text-lg font-semibold text-slate-900">
+                <h2 className="text-lg font-extrabold text-slate-900">
                   Sign out
                 </h2>
-                <p className="mt-1 text-sm text-slate-500">
+                <p className="mt-1 text-sm font-medium text-slate-500">
                   End your session on this device.
                 </p>
               </div>
 
-              <Button
+              <button
                 type="button"
-                variant="outline"
                 onClick={handleSignOut}
                 disabled={isSigningOut}
-                className="cursor-pointer border-slate-200 text-red-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700"
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-bold text-rose-600 shadow-sm ring-1 ring-rose-200 transition-all hover:bg-rose-500 hover:text-white hover:ring-rose-500 disabled:pointer-events-none disabled:opacity-60"
               >
-                <LogOut className="size-4" />
+                {isSigningOut ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <LogOut className="size-4" />
+                )}
                 {isSigningOut ? "Logging out..." : "Log out"}
-              </Button>
+              </button>
             </section>
           </div>
         </div>
@@ -311,4 +468,3 @@ export default function ProfileContent({ user }: { user: ProfileUser }) {
     </main>
   );
 }
-

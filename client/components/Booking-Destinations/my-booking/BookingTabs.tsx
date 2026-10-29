@@ -1,3 +1,4 @@
+import { CalendarClock, History } from "lucide-react";
 import type { Tab } from "./types";
 
 interface BookingTabsProps {
@@ -14,32 +15,49 @@ const BookingTabs = ({
   pastCount,
 }: BookingTabsProps) => {
   const items = [
-    { key: "upcoming", label: "Upcoming", count: upcomingCount },
-    { key: "past", label: "Past", count: pastCount },
+    {
+      key: "upcoming",
+      label: "Upcoming",
+      count: upcomingCount,
+      icon: CalendarClock,
+    },
+    { key: "past", label: "Past", count: pastCount, icon: History },
   ] as const;
 
   return (
     <div
       role="tablist"
       aria-label="Booking filter"
-      className="mt-6 inline-flex rounded-xl bg-slate-100 p-1"
+      className="relative z-10 -mt-6 inline-flex rounded-full bg-white p-1.5 shadow-xl shadow-cyan-200/60 ring-1 ring-cyan-100"
     >
-      {items.map((item) => (
-        <button
-          key={item.key}
-          type="button"
-          role="tab"
-          aria-selected={tab === item.key}
-          onClick={() => onChange(item.key)}
-          className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 ${
-            tab === item.key
-              ? "bg-white text-slate-900 shadow-sm"
-              : "text-slate-500 hover:text-slate-900"
-          }`}
-        >
-          {item.label} ({item.count})
-        </button>
-      ))}
+      {items.map((item) => {
+        const active = tab === item.key;
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.key}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            onClick={() => onChange(item.key)}
+            className={`flex cursor-pointer items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400 ${
+              active
+                ? "bg-linear-to-r from-cyan-500 to-sky-500 text-white shadow-md shadow-cyan-300/60"
+                : "text-slate-500 hover:bg-cyan-50 hover:text-cyan-700"
+            }`}
+          >
+            <Icon className="size-4" />
+            {item.label}
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-extrabold ${
+                active ? "bg-white/25 text-white" : "bg-cyan-100 text-cyan-700"
+              }`}
+            >
+              {item.count}
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 };

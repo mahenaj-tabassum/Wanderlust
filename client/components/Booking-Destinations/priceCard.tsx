@@ -2,7 +2,17 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "react-toastify";
+import {
+  CalendarDays,
+  CircleCheck,
+  Clock,
+  Headphones,
+  Loader2,
+  MapPin,
+  Plane,
+  ShieldCheck,
+} from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 interface Destination {
@@ -66,6 +76,8 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
   const router = useRouter();
   const bookingInProgress = useRef(false);
   const [loading, setLoading] = useState(false);
+  // Becomes true once this trip is booked, so the button cannot be clicked again
+  const [booked, setBooked] = useState(false);
   const destination = data.data;
 
   const { data: session } = authClient.useSession();
@@ -101,6 +113,7 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
       destinationName: destination.name,
       destinationImage: destination.imageUrl,
       country: destination.country,
+      category: destination.category,
       price: destination.price,
       duration: destination.duration,
       departureDate: destination.departureDate,
@@ -141,6 +154,7 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
 
         if (res.status === 409) {
           // আগেই বুক করা, এটা ভুল না, তথ্য
+          setBooked(true);
           toast.info(title, {
             description,
             action: {
@@ -155,6 +169,7 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
       }
 
       // 6. সফল
+      setBooked(true);
       toast.success("Trip booked successfully!", {
         description: `Your trip to ${destination.name}, ${destination.country} is confirmed for ${departureDate}.`,
         action: {
@@ -181,50 +196,106 @@ const PriceCard = ({ data }: DestinationDetailsProps) => {
     }
   };
 
-  return (
-    <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm lg:sticky lg:top-24">
-      <p className="text-sm font-medium text-slate-500">Trip price</p>
+  const rows = [
+    {
+      icon: MapPin,
+      label: "Destination",
+      value: destination.name,
+      tone: "bg-cyan-100 text-cyan-600",
+    },
+    {
+      icon: Clock,
+      label: "Duration",
+      value: destination.duration,
+      tone: "bg-orange-100 text-orange-500",
+    },
+    {
+      icon: CalendarDays,
+      label: "Departure",
+      value: departureDate,
+      tone: "bg-amber-100 text-amber-600",
+    },
+  ];
 
-      <div className="mt-2 flex items-baseline gap-2">
-        <span className="text-4xl font-bold tracking-tight text-slate-900">
-          ${destination.price.toLocaleString("en-US")}
-        </span>
-        <span className="text-sm text-slate-500">/ person</span>
+  return (
+    <aside className="h-fit overflow-hidden rounded-3xl bg-white shadow-xl shadow-cyan-200/60 ring-1 ring-cyan-100 lg:sticky lg:top-24">
+      {/* Price header */}
+      <div className="relative overflow-hidden bg-linear-to-br from-sky-600 via-cyan-500 to-orange-400 px-6 pb-7 pt-6 text-white">
+        <span className="pointer-events-none absolute -right-8 -top-10 size-36 rounded-full bg-linear-to-br from-amber-200 to-orange-300 opacity-90" />
+        <span className="pointer-events-none absolute -left-10 bottom-0 size-28 rounded-full bg-white/10" />
+        <p className="relative text-xs font-extrabold uppercase tracking-wider text-white/90">
+          Trip price
+        </p>
+        <div className="relative mt-2 flex items-baseline gap-2">
+          <span className="text-5xl font-extrabold tracking-tight">
+            ${destination.price.toLocaleString("en-US")}
+          </span>
+          <span className="text-sm font-bold text-white/90">/ person</span>
+        </div>
       </div>
 
-      <div className="my-6 border-t border-slate-200" />
-
-      <div className="space-y-4 text-sm">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-slate-500">Destination</span>
-          <span className="font-medium text-slate-900">{destination.name}</span>
+      <div className="p-6">
+        <div className="space-y-4">
+          {rows.map(({ icon: Icon, label, value, tone }) => (
+            <div key={label} className="flex items-center gap-3">
+              <span
+                className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${tone}`}
+              >
+                <Icon className="size-5" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  {label}
+                </p>
+                <p className="truncate text-sm font-extrabold text-slate-900">
+                  {value}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-slate-500">Duration</span>
-          <span className="font-medium text-slate-900">
-            {destination.duration}
+        <div className="my-6 border-t-2 border-dashed border-cyan-100" />
+
+        <button
+          type="button"
+          onClick={handleBooking}
+          disabled={loading || booked}
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-linear-to-r from-orange-500 to-amber-400 px-5 py-3.5 text-base font-bold text-white shadow-lg shadow-orange-300/60 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="size-5 animate-spin" />
+              Booking...
+            </>
+          ) : booked ? (
+            <>
+              <CircleCheck className="size-5" />
+              Already booked
+            </>
+          ) : (
+            <>
+              <Plane className="size-5" />
+              Book This Trip
+            </>
+          )}
+        </button>
+
+        <div className="mt-4 flex items-center justify-center gap-4 text-xs font-bold text-slate-500">
+          <span className="flex items-center gap-1.5">
+            <ShieldCheck className="size-4 text-cyan-600" />
+            Secure booking
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Headphones className="size-4 text-orange-500" />
+            24/7 support
           </span>
         </div>
 
-        <div className="flex items-center justify-between">
-          <span className="text-slate-500">Departure</span>
-          <span className="font-medium text-slate-900">{departureDate}</span>
-        </div>
+        <p className="mt-3 text-center text-xs font-medium text-slate-400">
+          Your next adventure starts here.
+        </p>
       </div>
-
-      <button
-        type="button"
-        onClick={handleBooking}
-        disabled={loading}
-        className="mt-7 w-full cursor-pointer rounded-xl bg-emerald-600 px-5 py-3 font-semibold text-white transition-colors hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
-      >
-        {loading ? "Booking..." : "Book This Trip"}
-      </button>
-
-      <p className="mt-3 text-center text-xs text-slate-500">
-        Your next adventure starts here.
-      </p>
     </aside>
   );
 };

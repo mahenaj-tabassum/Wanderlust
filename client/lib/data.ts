@@ -11,7 +11,7 @@ export type Destination = {
   name: string;
   country: string;
   price: number;
-  days: number;
+  duration: string;
   imageUrl: string;
   tag: string;
 };
