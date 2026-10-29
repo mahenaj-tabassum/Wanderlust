@@ -16,6 +16,16 @@ Wanderlust is a full-stack travel booking app. Travelers can browse destinations
 - Add, edit and delete destinations (with a live card preview while adding)
 - Edit your profile (name and photo) and send a message from the contact page
 
+⚠️ Good to know
+
+Wanderlust is not a role-based website. There are no admin or user roles, so every signed-in user has the same permissions:
+
+Anyone can create a destination card. Any signed-in user can add a new destination from the Add Destination page.
+Anyone can edit or delete any destination, not only the ones they created.
+Bookings belong to the user who made them, and each user sees their own list in My Booking.
+
+This keeps the project simple. Role-based access (for example, only admins can manage destinations) is a planned improvement.
+
 ## 🏗️ How it fits together
 
 ```
